@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
   return (
@@ -34,8 +35,11 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error("Root error boundary:", error);
+  console.error(error);
   const router = useRouter();
+  useEffect(() => {
+    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -73,17 +77,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Talentos | Vagas abertas e recrutamento" },
+      { title: "Talentos - Portal de Vagas e Recrutamento" },
       {
         name: "description",
-        content: "Portal de vagas: candidate-se e envie seu currículo online.",
+        content:
+          "Plataforma de recrutamento e seleção para vagas abertas, inscrição de candidatos e envio de currículos.",
       },
-      { property: "og:title", content: "Talentos | Vagas abertas e recrutamento" },
+      { name: "author", content: "Talentos" },
+      { property: "og:title", content: "Talentos - Portal de Vagas e Recrutamento" },
       {
         property: "og:description",
-        content: "Portal de vagas: candidate-se e envie seu currículo online.",
+        content:
+          "Plataforma de recrutamento e seleção para vagas abertas, inscrição de candidatos e envio de currículos.",
       },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {

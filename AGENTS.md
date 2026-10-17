@@ -10,8 +10,3 @@
 > the editor, so keep the branch in a working state.
 
 <!-- LOVABLE:END -->
-
-## Diretrizes de Git e Branches
-
-- **Grandes Alterações**: Sempre que for solicitada ou identificada uma alteração grande (novas funcionalidades, refatorações amplas ou mudanças estruturais), pergunte ao usuário se deseja criar uma nova branch dedicada.
-- Caso o usuário confirme, crie a nova branch antes de realizar as alterações no código.

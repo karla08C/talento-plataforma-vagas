@@ -1,0 +1,6 @@
+{
+  "name": "Talentos - Portal de Vagas e Recrutamento",
+  "description": "Plataforma de recrutamento e seleção para vagas abertas, inscrição de candidatos e envio de currículos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,19 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { z } from "zod";
-import { toast } from "sonner";
-import { ArrowLeft, MapPin, Building2, Upload } from "lucide-react";
+import { ArrowLeft, MapPin, Building2, CheckCircle2, Clock } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionState } from "@/lib/auth";
+import { CandidateApplicationForm } from "@/components/CandidateApplicationForm";
+import type { CandidateApplicationFormValues } from "@/lib/candidate-schema";
 
 export const Route = createFileRoute("/vagas/$jobId")({
   head: () => ({
@@ -32,19 +28,11 @@ export const Route = createFileRoute("/vagas/$jobId")({
   component: JobDetail,
 });
 
-const applicationSchema = z.object({
-  fullName: z.string().trim().min(3, "Informe seu nome completo").max(120),
-  email: z.string().trim().email("E-mail inválido").max(255),
-  phone: z.string().trim().max(30).optional(),
-  coverLetter: z.string().trim().max(2000).optional(),
-});
-
 function JobDetail() {
   const { jobId } = Route.useParams();
   const { user, loading: sessionLoading } = useSessionState();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [submitting, setSubmitting] = useState(false);
 
   const { data: job, isLoading } = useQuery({
     queryKey: ["job", jobId],
@@ -61,7 +49,7 @@ function JobDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("applications")
-        .select("id, status")
+        .select("id, status, full_name, email, phone, cover_letter, created_at")
         .eq("job_id", jobId)
         .eq("candidate_id", user!.id)
         .maybeSingle();
@@ -70,63 +58,62 @@ function JobDetail() {
     },
   });
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!user) return;
-    const form = new FormData(e.currentTarget);
-    const parsed = applicationSchema.safeParse({
-      fullName: String(form.get("fullName") ?? ""),
-      email: String(form.get("email") ?? ""),
-      phone: String(form.get("phone") ?? ""),
-      coverLetter: String(form.get("coverLetter") ?? ""),
-    });
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Dados inválidos");
-      return;
+  const handleApplicationSubmit = async (
+    values: CandidateApplicationFormValues,
+    file?: File | null,
+  ) => {
+    let candidateId = user?.id;
+
+    // If user is not yet logged in, auto-create/sign-up or ensure an account exists for their application
+    if (!candidateId) {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: values.email,
+        options: {
+          data: {
+            full_name: values.name,
+          },
+        },
+      });
+
+      if (authError && !authData?.user) {
+        throw new Error(
+          `Não foi possível registrar o candidato com o e-mail informado: ${authError.message}. Se você já possui cadastro, faça login.`,
+        );
+      }
+
+      candidateId = authData?.user?.id;
     }
 
-    const file = form.get("resume");
-    if (!(file instanceof File) || file.size === 0) {
-      toast.error("Anexe seu currículo (PDF, DOC ou DOCX)");
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("O currículo deve ter no máximo 10 MB");
-      return;
+    if (!candidateId) {
+      throw new Error("Não foi possível identificar o ID do candidato.");
     }
 
-    setSubmitting(true);
-    const extension = file.name.split(".").pop()?.toLowerCase() ?? "pdf";
-    const path = `${user.id}/${jobId}-${Date.now()}.${extension}`;
-
-    const { error: uploadError } = await supabase.storage.from("resumes").upload(path, file);
-    if (uploadError) {
-      setSubmitting(false);
-      toast.error("Falha ao enviar o currículo", { description: uploadError.message });
-      return;
+    let resumePath: string | null = null;
+    if (file && file.size > 0) {
+      const extension = file.name.split(".").pop()?.toLowerCase() ?? "pdf";
+      const path = `${candidateId}/${jobId}-${Date.now()}.${extension}`;
+      const { error: uploadError } = await supabase.storage.from("resumes").upload(path, file);
+      if (uploadError) {
+        throw new Error(`Falha ao fazer upload do currículo: ${uploadError.message}`);
+      }
+      resumePath = path;
     }
 
-    const { error } = await supabase.from("applications").insert({
+    const { error: insertError } = await supabase.from("applications").insert({
       job_id: jobId,
-      candidate_id: user.id,
-      full_name: parsed.data.fullName,
-      email: parsed.data.email,
-      phone: parsed.data.phone || null,
-      cover_letter: parsed.data.coverLetter || null,
-      resume_path: path,
+      candidate_id: candidateId,
+      full_name: values.name,
+      email: values.email,
+      phone: values.phone || null,
+      cover_letter: values.professionalSummary,
+      resume_path: resumePath,
     });
-    setSubmitting(false);
 
-    if (error) {
-      toast.error("Não foi possível concluir a inscrição", { description: error.message });
-      return;
+    if (insertError) {
+      throw new Error(`Não foi possível salvar a candidatura: ${insertError.message}`);
     }
 
-    toast.success("Candidatura enviada!", {
-      description: "Acompanhe o status em Minhas candidaturas.",
-    });
-    void queryClient.invalidateQueries({ queryKey: ["application", jobId, user.id] });
-    navigate({ to: "/minhas-candidaturas" });
+    void queryClient.invalidateQueries({ queryKey: ["application", jobId, candidateId] });
   };
 
   return (
@@ -147,29 +134,10 @@ function JobDetail() {
 
         {job && (
           <>
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                  job.location.toLowerCase().includes("remoto")
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
-                    : job.location.toLowerCase().includes("híbrido") ||
-                        job.location.toLowerCase().includes("hibrido")
-                      ? "bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800"
-                      : "bg-orange-50 text-orange-800 border border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800"
-                }`}
-              >
-                {job.location.toLowerCase().includes("remoto")
-                  ? "Remoto"
-                  : job.location.toLowerCase().includes("híbrido") ||
-                      job.location.toLowerCase().includes("hibrido")
-                    ? "Híbrido"
-                    : "Presencial"}
-              </span>
-              <Badge variant="outline" className="border-border">
-                {job.employment_type}
-              </Badge>
+            <div className="flex flex-wrap gap-2">
               <Badge variant="secondary">{job.department}</Badge>
-              {job.seniority && <Badge variant="outline">{job.seniority}</Badge>}
+              <Badge variant="outline">{job.employment_type}</Badge>
+              <Badge variant="outline">{job.seniority}</Badge>
               {job.status === "closed" && <Badge variant="destructive">Encerrada</Badge>}
             </div>
             <h1 className="mt-4 text-3xl font-semibold sm:text-4xl">{job.title}</h1>
@@ -201,82 +169,75 @@ function JobDetail() {
               <CardHeader>
                 <CardTitle>Inscrever-se nesta vaga</CardTitle>
                 <CardDescription>
-                  Preencha seus dados e anexe o currículo em PDF, DOC ou DOCX (até 10 MB).
+                  Preencha o formulário com seus dados cadastrais, resumo profissional e anexe seu
+                  currículo.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {sessionLoading && <Skeleton className="h-24 rounded-lg" />}
 
-                {!sessionLoading && !user && (
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Entre ou crie sua conta gratuita para enviar o currículo.
-                    </p>
-                    <Button asChild>
-                      <Link to="/auth" search={{ redirect: `/vagas/${jobId}` }}>
-                        Entrar para me candidatar
-                      </Link>
-                    </Button>
+                {!sessionLoading && existing && (
+                  <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-6 text-card-foreground">
+                    <div className="flex items-start gap-3">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="size-5" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-semibold text-base">Candidatura já enviada!</h3>
+                          <Badge variant="secondary" className="capitalize">
+                            Status: {existing.status ?? "Recebida"}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Sua candidatura para esta vaga foi registrada com sucesso na base de
+                          talentos.
+                          {existing.created_at && (
+                            <span className="block mt-1 text-xs">
+                              Enviada em {new Date(existing.created_at).toLocaleDateString("pt-BR")}
+                            </span>
+                          )}
+                        </p>
+                        <div className="pt-3">
+                          <Button variant="outline" size="sm" asChild>
+                            <Link to="/">Ver outras vagas abertas</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                {!sessionLoading && user && existing && (
-                  <p className="text-sm">
-                    Você já se candidatou a esta vaga.{" "}
-                    <Link to="/minhas-candidaturas" className="underline underline-offset-4">
-                      Ver minhas candidaturas
-                    </Link>
-                  </p>
-                )}
-
-                {!sessionLoading && user && !existing && (
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="fullName">Nome completo</Label>
-                        <Input id="fullName" name="fullName" required maxLength={120} />
+                {!sessionLoading && !existing && (
+                  <>
+                    {!user && (
+                      <div className="mb-6 flex flex-col gap-2 rounded-lg border border-border/70 bg-muted/40 p-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm">
+                        <span className="text-muted-foreground">
+                          Já possui conta de candidato? Faça login para carregar seus dados
+                          automaticamente.
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          asChild
+                          className="shrink-0 self-start sm:self-auto"
+                        >
+                          <Link to="/auth" search={{ redirect: `/vagas/${jobId}` }}>
+                            Entrar
+                          </Link>
+                        </Button>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">E-mail</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          required
-                          maxLength={255}
-                          defaultValue={user.email ?? ""}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Telefone</Label>
-                      <Input id="phone" name="phone" maxLength={30} placeholder="(11) 90000-0000" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="coverLetter">Carta de apresentação</Label>
-                      <Textarea
-                        id="coverLetter"
-                        name="coverLetter"
-                        rows={5}
-                        maxLength={2000}
-                        placeholder="Conte por que você é a pessoa certa para esta vaga."
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="resume">Currículo</Label>
-                      <Input
-                        id="resume"
-                        name="resume"
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        required
-                      />
-                    </div>
-                    <Button type="submit" disabled={submitting}>
-                      <Upload className="size-4" />
-                      {submitting ? "Enviando..." : "Enviar candidatura"}
-                    </Button>
-                  </form>
+                    )}
+                    <CandidateApplicationForm
+                      jobId={jobId}
+                      defaultValues={{
+                        name: (user?.user_metadata?.["full_name"] as string) ?? "",
+                        email: user?.email ?? "",
+                      }}
+                      onCustomSubmit={handleApplicationSubmit}
+                      requireResume={true}
+                    />
+                  </>
                 )}
               </CardContent>
             </Card>
