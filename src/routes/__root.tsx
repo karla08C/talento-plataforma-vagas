@@ -77,18 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Talentos - Portal de Vagas e Recrutamento" },
+      { title: "Talentos do Interior - Desenvolvimento Regional" },
       {
         name: "description",
         content:
-          "Plataforma de recrutamento e seleção para vagas abertas, inscrição de candidatos e envio de currículos.",
+          "Plataforma didática de recrutamento, seleção e atração de talentos para polos e municípios do interior.",
       },
-      { name: "author", content: "Talentos" },
-      { property: "og:title", content: "Talentos - Portal de Vagas e Recrutamento" },
+      { name: "author", content: "Talentos do Interior" },
+      { property: "og:title", content: "Talentos do Interior - Desenvolvimento Regional" },
       {
         property: "og:description",
         content:
-          "Plataforma de recrutamento e seleção para vagas abertas, inscrição de candidatos e envio de currículos.",
+          "Plataforma didática de recrutamento, seleção e atração de talentos para polos e municípios do interior.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
