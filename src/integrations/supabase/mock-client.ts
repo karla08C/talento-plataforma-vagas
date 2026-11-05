@@ -213,6 +213,40 @@ export const DEFAULT_MOCK_APPLICATIONS = [
     created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
     updated_at: new Date(Date.now() - 1 * 86400000).toISOString(),
   },
+  {
+    id: "app-105",
+    job_id: "a4d11e4c-0218-4be0-d6fc-38eb6e902d04",
+    candidate_id: "user_mariana_souza",
+    full_name: "Mariana Souza",
+    email: "mariana.souza@exemplo.com",
+    phone: "(11) 98765-4321",
+    cover_letter:
+      "Interesse em transição e apoio a projetos regionais de marketing digital e comunicação.",
+    resume_path: "mariana_souza_cv.pdf",
+    status: "rejected",
+    notes:
+      "Agradecemos o envio. Para esta posição específica foi priorizado candidato com formação presencial no polo de BH. Currículo mantido no banco regional para futuras vagas.",
+    rating: 3,
+    created_at: new Date(Date.now() - 14 * 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 4 * 86400000).toISOString(),
+  },
+  {
+    id: "app-106",
+    job_id: "c6f33a6e-2430-4da2-f81e-50ad8a124f06",
+    candidate_id: "user_mariana_souza",
+    full_name: "Mariana Souza",
+    email: "mariana.souza@exemplo.com",
+    phone: "(11) 98765-4321",
+    cover_letter:
+      "Experiência com rotinas administrativas em filial do interior de SP e interesse em desenvolvimento profissional.",
+    resume_path: "mariana_souza_financeiro.pdf",
+    status: "screening",
+    notes:
+      "Currículo em análise pelo time regional de gestão e finanças. Perfil com boa aderência.",
+    rating: 4,
+    created_at: new Date(Date.now() - 3 * 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 1 * 86400000).toISOString(),
+  },
 ];
 
 let storedJobs: unknown[] = [...DEFAULT_MOCK_JOBS];

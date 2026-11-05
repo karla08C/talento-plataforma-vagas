@@ -32,6 +32,7 @@ import { useSessionState } from "@/lib/auth";
 import { SiteHeader } from "@/components/SiteHeader";
 import { formatDatePtBR } from "@/lib/utils";
 import { CompanyLogoSlot } from "@/components/CompanyLogoSlot";
+import { CandidateStatusBadge } from "@/components/CandidateStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -476,10 +477,10 @@ export function RhDashboardPage() {
             <div className="space-y-1.5">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                 <Compass className="size-3.5" />
-                Gestão de Pessoas & Atração no Interior
+                Gestão de Pessoas & Atração de Talentos
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                Painel do RH & Desenvolvimento Regional
+                Painel do RH & Recrutamento
               </h1>
               <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
                 Ferramenta didática para gestão de processos seletivos nos polos do interior. Crie
@@ -508,7 +509,7 @@ export function RhDashboardPage() {
           {/* Cards de Métricas Principais */}
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="rounded-xl border border-border/80 bg-card/90 p-4 shadow-xs">
-              <p className="text-xs font-medium text-muted-foreground">Vagas Abertas no Interior</p>
+              <p className="text-xs font-medium text-muted-foreground">Vagas Abertas</p>
               <div className="mt-1 flex items-baseline gap-2">
                 <span className="text-2xl sm:text-3xl font-extrabold text-foreground">
                   {openJobsCount}
@@ -711,8 +712,14 @@ export function RhDashboardPage() {
                             )}
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-3 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-border/60">
-                            <div className="w-48">
+                          <div className="flex flex-wrap items-center gap-2.5 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-border/60">
+                            <CandidateStatusBadge
+                              status={app.status}
+                              size="sm"
+                              showEnglishTag={true}
+                            />
+
+                            <div className="w-52">
                               <Select
                                 value={app.status}
                                 onValueChange={(val) =>
@@ -723,11 +730,17 @@ export function RhDashboardPage() {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="received">1. Inscrição Recebida</SelectItem>
-                                  <SelectItem value="screening">2. Em Triagem (Perfil)</SelectItem>
-                                  <SelectItem value="interview">3. Em Entrevista</SelectItem>
-                                  <SelectItem value="offer">4. Proposta Enviada</SelectItem>
-                                  <SelectItem value="rejected">5. Não Selecionado</SelectItem>
+                                  <SelectItem value="received">1. Inscrição (Applied)</SelectItem>
+                                  <SelectItem value="screening">
+                                    2. Em Análise (In Review)
+                                  </SelectItem>
+                                  <SelectItem value="interview">
+                                    3. Entrevista (Interview Scheduled)
+                                  </SelectItem>
+                                  <SelectItem value="offer">4. Proposta (Offer)</SelectItem>
+                                  <SelectItem value="rejected">
+                                    5. Não Selecionado (Rejected)
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1166,9 +1179,25 @@ export function RhDashboardPage() {
                   </div>
                 </div>
 
+                <div className="flex flex-wrap items-center justify-between gap-2 p-3.5 rounded-xl bg-card border border-border/80 shadow-xs">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Status da Candidatura
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Visível diretamente na área do candidato
+                    </span>
+                  </div>
+                  <CandidateStatusBadge
+                    status={selectedCandidate.status}
+                    size="default"
+                    showEnglishTag={true}
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
-                    Etapa Atual no Funil
+                    Alterar Etapa no Funil
                   </Label>
                   <Select
                     value={selectedCandidate.status}
@@ -1180,11 +1209,13 @@ export function RhDashboardPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="received">1. Inscrição Recebida</SelectItem>
-                      <SelectItem value="screening">2. Em Triagem (Análise de Perfil)</SelectItem>
-                      <SelectItem value="interview">3. Em Entrevista (RH / Gestão)</SelectItem>
-                      <SelectItem value="offer">4. Proposta Enviada (Aprovado)</SelectItem>
-                      <SelectItem value="rejected">5. Não Selecionado (Encerrado)</SelectItem>
+                      <SelectItem value="received">1. Inscrição (Applied)</SelectItem>
+                      <SelectItem value="screening">2. Em Análise (In Review)</SelectItem>
+                      <SelectItem value="interview">
+                        3. Entrevista Agendada (Interview Scheduled)
+                      </SelectItem>
+                      <SelectItem value="offer">4. Proposta Enviada (Offer)</SelectItem>
+                      <SelectItem value="rejected">5. Não Selecionado (Rejected)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -31,10 +31,14 @@ export function SiteHeader() {
             </span>
             <div className="flex flex-col">
               <span className="font-display text-base font-bold tracking-tight text-foreground leading-tight">
-                {companyName || "Talentos"}
+                {companyName && !companyName.includes("do Interior")
+                  ? companyName
+                  : "Portal de Vagas"}
               </span>
               <span className="text-[10px] text-muted-foreground font-medium leading-none hidden sm:inline">
-                Portal de Vagas
+                {companyName && companyName !== "Portal de Vagas"
+                  ? "Portal de Vagas"
+                  : "Carreiras & Oportunidades"}
               </span>
             </div>
           </Link>

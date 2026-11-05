@@ -118,8 +118,8 @@ export function CompanyLogoSlot({
   const handleRemove = () => {
     resetLogo();
     setInputUrl("");
-    setInputName("Talentos do Interior");
-    setInputSubtitle("Desenvolvimento Regional & Oportunidades");
+    setInputName("Portal de Vagas");
+    setInputSubtitle("Oportunidades & Carreiras");
     toast.info("Logo removida. O espaço reservado voltou ao padrão.");
     setOpen(false);
   };
@@ -472,7 +472,7 @@ export function CompanyLogoSlot({
                   ✓ Verificada
                 </span>
                 <span className="text-[10px] text-muted-foreground hidden sm:inline">
-                  Portal Oficial
+                  Carreiras
                 </span>
               </div>
             </div>

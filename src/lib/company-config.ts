@@ -8,8 +8,8 @@ import { useEffect, useState, useCallback } from "react";
  * (Exemplos: "/logo.png", "https://suaempresa.com/logo.svg", etc.)
  */
 export const DEFAULT_COMPANY_CONFIG = {
-  name: "Talentos do Interior",
-  subtitle: "Desenvolvimento Regional & Oportunidades",
+  name: "Portal de Vagas",
+  subtitle: "Oportunidades & Carreiras",
   // Insira a URL ou caminho da logo da empresa aqui:
   logoUrl: "",
 };
@@ -90,14 +90,18 @@ export function useCompanyLogo() {
         }
 
         const storedName = localStorage.getItem(NAME_STORAGE_KEY);
-        if (storedName !== null && storedName.trim()) {
+        if (
+          storedName !== null &&
+          storedName.trim() &&
+          storedName.trim() !== "Talentos do Interior"
+        ) {
           setCompanyNameState(storedName.trim());
         } else {
           setCompanyNameState(DEFAULT_COMPANY_CONFIG.name);
         }
 
         const storedSub = localStorage.getItem(SUBTITLE_STORAGE_KEY);
-        if (storedSub !== null && storedSub.trim()) {
+        if (storedSub !== null && storedSub.trim() && !storedSub.includes("do Interior")) {
           setCompanySubtitleState(storedSub.trim());
         } else {
           setCompanySubtitleState(DEFAULT_COMPANY_CONFIG.subtitle);

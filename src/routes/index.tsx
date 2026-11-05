@@ -11,7 +11,6 @@ import {
   SlidersHorizontal,
   X,
   ChevronRight,
-  ShieldCheck,
   Sparkles,
   HeartHandshake,
   TrendingUp,
@@ -184,12 +183,12 @@ function Home() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                <ShieldCheck className="size-3.5" />
-                <span>Portal Oficial de Vagas & Talentos</span>
-              </div>
               <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
-                Construa sua história na {companyName}
+                {companyName &&
+                companyName !== "Portal de Vagas" &&
+                !companyName.includes("do Interior")
+                  ? `Construa sua história na ${companyName}`
+                  : "Construa sua história profissional"}
               </h1>
               <p className="max-w-2xl text-base text-muted-foreground sm:text-lg">
                 Explore nossas oportunidades abertas, inscreva-se em poucos cliques e acompanhe seu
